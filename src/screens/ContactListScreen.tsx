@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -8,56 +8,51 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import {useDispatch, useSelector} from 'react-redux';
-import {
-  fetchContacts,
-  selectContacts,
-  deleteContact,
-} from '../slices/contactSlice';
+import {useDispatch} from 'react-redux';
+import {fetchContacts, deleteContact} from '../slices/contactSlice';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useMutation, useQuery} from '@tanstack/react-query';
 
 const ContactListScreen = () => {
   const dispatch = useDispatch();
-  const contacts = useSelector(selectContacts);
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleFetchContacts = useCallback(() => {
-    try {
-      //@ts-ignore
-      dispatch(fetchContacts());
-    } catch (error) {
-      // Handle any error during refresh
-    } finally {
-      setIsRefreshing(false);
-      setIsDeleting(false);
-    }
-  }, [dispatch]);
-
-  useEffect(() => {
-    handleFetchContacts();
-  }, [dispatch, handleFetchContacts]);
-
-  const handleDeleteContact = (id: number) => {
-    setIsDeleting(true);
+  const {
+    data: contacts,
+    isLoading,
+    refetch,
+    isRefetching,
     //@ts-ignore
-    dispatch(deleteContact(id));
+  } = useQuery(['contacts'], () => dispatch(fetchContacts()), {
+    staleTime: 50 * 5 * 1000,
+    cacheTime: 60 * 15 * 1000,
+  });
+
+  //@ts-ignore
+  const deleteContactMutation = useMutation((id: number) =>
+    //@ts-ignore
+    dispatch(deleteContact(id)),
+  );
+  const handleDeleteContact = async (id: number) => {
+    //@ts-ignore
+    await deleteContactMutation.mutateAsync(id);
   };
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    handleFetchContacts();
-  };
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center">
+        <ActivityIndicator size={'large'} />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView>
       <FlatList
-        data={contacts}
+        data={contacts?.payload}
         className="p-4"
         contentContainerStyle={{paddingBottom: 16}}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} />
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }
         renderItem={({item}) => {
           return (
@@ -68,13 +63,13 @@ const ContactListScreen = () => {
                   className="w-16 h-16 mr-4 rounded-full"
                 />
                 <View>
-                  <Text>
+                  <Text className="font-bold">
                     {item.firstName} {item.lastName}
                   </Text>
                   <Text>{item.age} Years</Text>
                 </View>
               </View>
-              {isDeleting ? (
+              {deleteContactMutation.isLoading ? (
                 <ActivityIndicator
                   size="small"
                   color={'red'}
