@@ -1,17 +1,12 @@
 import React, {useState} from 'react';
-import {
-  View,
-  Text,
-  Image,
-  ActivityIndicator,
-  TouchableOpacity,
-} from 'react-native';
+import {View, Text, ActivityIndicator, TouchableOpacity} from 'react-native';
 import {useMutation} from '@tanstack/react-query';
 import {useDispatch} from 'react-redux';
-import {deleteContact} from '../slices/contactSlice';
+import {Contact, deleteContact} from '../slices/contactSlice';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {StackParamList} from '../navigation/StackParamList';
 import DeleteIcon from '../shared/assets/svg/DeleteIcon';
+import FastImage from 'react-native-fast-image';
 
 type Props = {
   item: Contact;
@@ -38,7 +33,7 @@ export default function ContactItemScreen({item}: Props) {
       onPress={() => navigate('ContactDetailScreen', {contactId: item.id})}
       className="flex-row items-center justify-between mb-4">
       <View className="flex-row items-center">
-        <Image
+        <FastImage
           source={{uri: item.photo}}
           className="w-12 h-12 mr-4 rounded-full bg-gray-300"
         />

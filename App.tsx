@@ -10,7 +10,14 @@ if (__DEV__) {
   import('./reactotron').then(() => console.log('Reactotron Configured'));
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      cacheTime: 1000 * 60 * 15, // 15 minutes
+    },
+  },
+});
 
 const App = () => {
   return (

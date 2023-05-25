@@ -2,8 +2,8 @@ import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
 import {RootState} from '../store';
 import axios from 'axios';
 
-interface Contact {
-  id: number;
+export interface Contact {
+  id: string;
   firstName: string;
   lastName: string;
   age: number;
@@ -26,11 +26,19 @@ export const fetchContacts = createAsyncThunk(
   },
 );
 
+export const fetchContactById = createAsyncThunk(
+  'contacts/fetchContactById',
+  async (contactId: number) => {
+    const response = await axios.get(`${baseUrl}/${contactId}`);
+    return response.data.data as Contact;
+  },
+);
+
 export const deleteContact = createAsyncThunk(
   'contacts/deleteContact',
-  async (id: number) => {
-    await axios.delete(`${baseUrl}/${id}`);
-    return id;
+  async (contactId: number) => {
+    await axios.delete(`${baseUrl}/${contactId}`);
+    return contactId;
   },
 );
 
@@ -59,7 +67,7 @@ const contactSlice = createSlice({
       })
       .addCase(deleteContact.fulfilled, (state, action) => {
         state.contacts = state.contacts.filter(
-          contact => contact.id !== action.payload,
+          contact => Number(contact.id) !== action.payload,
         );
       });
   },
