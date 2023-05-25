@@ -1,17 +1,17 @@
-import React, {useState} from 'react';
+import React, {useCallback} from 'react';
 import {
   View,
   Text,
   FlatList,
   RefreshControl,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
 } from 'react-native';
 import {useDispatch} from 'react-redux';
-import {fetchContacts, deleteContact} from '../slices/contactSlice';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useMutation, useQuery} from '@tanstack/react-query';
+import {fetchContacts} from '../slices/contactSlice';
+import {useQuery} from '@tanstack/react-query';
+import PlusIcon from '../shared/assets/svg/PlusIcon';
+import ContactItemScreen from '../components/ContactItemScreen';
 
 const ContactListScreen = () => {
   const dispatch = useDispatch();
@@ -27,15 +27,9 @@ const ContactListScreen = () => {
     cacheTime: 60 * 15 * 1000,
   });
 
-  //@ts-ignore
-  const deleteContactMutation = useMutation((id: number) =>
-    //@ts-ignore
-    dispatch(deleteContact(id)),
-  );
-  const handleDeleteContact = async (id: number) => {
-    //@ts-ignore
-    await deleteContactMutation.mutateAsync(id);
-  };
+  const renderItem = useCallback((props: {item: Contact}) => {
+    return <ContactItemScreen {...props} />;
+  }, []);
 
   if (isLoading) {
     return (
@@ -46,7 +40,7 @@ const ContactListScreen = () => {
   }
 
   return (
-    <SafeAreaView>
+    <View className="flex-1 bg-white">
       <FlatList
         data={contacts?.payload}
         className="p-4"
@@ -54,37 +48,15 @@ const ContactListScreen = () => {
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }
-        renderItem={({item}) => {
-          return (
-            <View className="flex-row items-center justify-between bg-slate-300 mb-4 p-2 rounded-md">
-              <View className="flex-row items-center">
-                <Image
-                  source={{uri: item.photo}}
-                  className="w-16 h-16 mr-4 rounded-full"
-                />
-                <View>
-                  <Text className="font-bold">
-                    {item.firstName} {item.lastName}
-                  </Text>
-                  <Text>{item.age} Years</Text>
-                </View>
-              </View>
-              {deleteContactMutation.isLoading ? (
-                <ActivityIndicator
-                  size="small"
-                  color={'red'}
-                  className="px-4"
-                />
-              ) : (
-                <TouchableOpacity onPress={() => handleDeleteContact(item.id)}>
-                  <Text>Hapus</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          );
-        }}
+        renderItem={renderItem}
       />
-    </SafeAreaView>
+      <TouchableOpacity className="absolute bottom-12 right-4">
+        <View className="bg-teal-700 p-4 rounded-full flex-row items-center">
+          <PlusIcon />
+          <Text className="text-white font-semibold">Add New Contact</Text>
+        </View>
+      </TouchableOpacity>
+    </View>
   );
 };
 
