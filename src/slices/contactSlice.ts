@@ -16,7 +16,7 @@ interface ContactState {
   error: string | null;
 }
 
-const baseUrl = 'https://contact.herokuapp.com/contact';
+export const baseUrl = 'https://contact.herokuapp.com/contact';
 
 export const fetchContacts = createAsyncThunk(
   'contacts/fetchContacts',
@@ -28,7 +28,7 @@ export const fetchContacts = createAsyncThunk(
 
 export const fetchContactById = createAsyncThunk(
   'contacts/fetchContactById',
-  async (contactId: number) => {
+  async (contactId: string) => {
     const response = await axios.get(`${baseUrl}/${contactId}`);
     return response.data.data as Contact;
   },
@@ -36,7 +36,7 @@ export const fetchContactById = createAsyncThunk(
 
 export const deleteContact = createAsyncThunk(
   'contacts/deleteContact',
-  async (contactId: number) => {
+  async (contactId: string) => {
     await axios.delete(`${baseUrl}/${contactId}`);
     return contactId;
   },
@@ -67,7 +67,7 @@ const contactSlice = createSlice({
       })
       .addCase(deleteContact.fulfilled, (state, action) => {
         state.contacts = state.contacts.filter(
-          contact => Number(contact.id) !== action.payload,
+          contact => contact.id !== action.payload,
         );
       });
   },

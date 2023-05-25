@@ -7,25 +7,25 @@ import {
   TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import {useDispatch} from 'react-redux';
-import {Contact, fetchContacts} from '../slices/contactSlice';
+import {Contact, baseUrl} from '../slices/contactSlice';
 import {useQuery} from '@tanstack/react-query';
 import PlusIcon from '../shared/assets/svg/PlusIcon';
 import ContactItemScreen from '../components/ContactItemScreen';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {StackParamList} from '../navigation/StackParamList';
+import axios from 'axios';
 
 const ContactListScreen = () => {
   const {navigate} = useNavigation<NavigationProp<StackParamList>>();
-  const dispatch = useDispatch();
 
   const {
     data: contacts,
     isLoading,
     refetch,
     isRefetching,
-    //@ts-ignore
-  } = useQuery(['contacts'], () => dispatch(fetchContacts()));
+  } = useQuery(['contacts'], () =>
+    axios.get(baseUrl).then(result => result.data.data),
+  );
 
   const renderItem = useCallback((props: {item: Contact}) => {
     return <ContactItemScreen {...props} />;
@@ -42,7 +42,7 @@ const ContactListScreen = () => {
   return (
     <View className="flex-1 bg-white">
       <FlatList
-        data={contacts?.payload}
+        data={contacts}
         className="p-4"
         contentContainerStyle={{paddingBottom: 16}}
         refreshControl={

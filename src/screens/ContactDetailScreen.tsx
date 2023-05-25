@@ -6,13 +6,19 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
+  ToastAndroid,
 } from 'react-native';
-import {useDispatch} from 'react-redux';
-import {fetchContactById} from '../slices/contactSlice';
-import {RouteProp, useRoute} from '@react-navigation/native';
+import {baseUrl} from '../slices/contactSlice';
+import {
+  NavigationProp,
+  RouteProp,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import {StackParamList} from '../navigation/StackParamList';
-import {useQuery} from '@tanstack/react-query';
+import {useMutation, useQuery, useQueryClient} from '@tanstack/react-query';
 import FastImage from 'react-native-fast-image';
+import axios from 'axios';
 
 type ContactDetailScreenRouteProp = RouteProp<
   StackParamList,
@@ -20,8 +26,10 @@ type ContactDetailScreenRouteProp = RouteProp<
 >;
 
 export default function ContactDetailScreen() {
-  const dispatch = useDispatch();
+  const queryClient = useQueryClient();
+
   const {params} = useRoute<ContactDetailScreenRouteProp>();
+  const {goBack} = useNavigation<NavigationProp<StackParamList>>();
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -32,21 +40,46 @@ export default function ContactDetailScreen() {
     ['contact', params.contactId],
     () => {
       if (params.contactId) {
-        //@ts-ignore
-        return dispatch(fetchContactById(params.contactId));
+        return axios
+          .get(`${baseUrl}/${params.contactId}`)
+          .then(result => result.data.data);
       }
       return null;
     },
   );
 
   useEffect(() => {
+    console.log(contact);
     if (contact) {
-      setFirstName(contact?.payload?.firstName);
-      setLastName(contact?.payload?.lastName);
-      setAge(contact?.payload?.age.toString());
-      setPhoto(contact?.payload?.photo);
+      setFirstName(contact?.firstName);
+      setLastName(contact?.lastName);
+      setAge(contact?.age?.toString());
+      setPhoto(contact?.photo);
     }
   }, [contact]);
+
+  const {mutateAsync, isLoading: isEditLoading} = useMutation(async () => {
+    if (params.contactId) {
+      const response = axios.put(`${baseUrl}/${params.contactId}`, {
+        firstName,
+        lastName,
+        age: Number(age),
+        photo,
+      });
+      return response;
+    }
+  });
+
+  const handleSave = async () => {
+    await mutateAsync().then(() => {
+      ToastAndroid.show('Contact edited successfully', ToastAndroid.SHORT);
+      queryClient.refetchQueries(['contacts']);
+      queryClient.refetchQueries(['contacts', params.contactId]);
+      setTimeout(() => {
+        goBack();
+      }, 500);
+    });
+  };
 
   if (isLoading) {
     return (
@@ -86,9 +119,15 @@ export default function ContactDetailScreen() {
           placeholder="Enter Age"
         />
       </ScrollView>
-      <TouchableOpacity>
-        <View className="bg-teal-700 p-4 m-4 mb-12 rounded-md">
-          <Text className="text-white text-center font-bold text-lg">Save</Text>
+      <TouchableOpacity onPress={handleSave}>
+        <View className="bg-teal-700 p-3 m-4 mb-12 rounded-md">
+          {isEditLoading ? (
+            <ActivityIndicator color={'white'} size={'small'} />
+          ) : (
+            <Text className="text-white text-center font-bold text-lg">
+              Save
+            </Text>
+          )}
         </View>
       </TouchableOpacity>
     </View>

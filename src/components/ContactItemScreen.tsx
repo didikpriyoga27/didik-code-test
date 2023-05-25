@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {memo, useState} from 'react';
 import {View, Text, ActivityIndicator, TouchableOpacity} from 'react-native';
 import {useMutation} from '@tanstack/react-query';
 import {useDispatch} from 'react-redux';
@@ -12,7 +12,7 @@ type Props = {
   item: Contact;
 };
 
-export default function ContactItemScreen({item}: Props) {
+function ContactItemScreen({item}: Props) {
   const {navigate} = useNavigation<NavigationProp<StackParamList>>();
   const [isDisableTouch, setIsDisableTouch] = useState(false);
   const dispatch = useDispatch();
@@ -58,3 +58,5 @@ export default function ContactItemScreen({item}: Props) {
     </TouchableOpacity>
   );
 }
+
+export default memo(ContactItemScreen);
