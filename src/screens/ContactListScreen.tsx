@@ -1,4 +1,4 @@
-import React, {useCallback} from 'react';
+import React, {useCallback, useMemo} from 'react';
 import {
   View,
   Text,
@@ -14,9 +14,11 @@ import ContactItemScreen from '../components/ContactItemScreen';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {StackParamList} from '../navigation/StackParamList';
 import axios from 'axios';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const ContactListScreen = () => {
   const {navigate} = useNavigation<NavigationProp<StackParamList>>();
+  const {bottom} = useSafeAreaInsets();
 
   const {
     data: contacts,
@@ -26,6 +28,21 @@ const ContactListScreen = () => {
   } = useQuery(['contacts'], () =>
     axios.get(baseUrl).then(result => result.data.data),
   );
+
+  const sortedData = useMemo(() => {
+    if (contacts?.length) {
+      return contacts?.sort((a, b) => {
+        if (a.firstName < b.firstName) {
+          return -1;
+        }
+        if (a.firstName > b.firstName) {
+          return 1;
+        }
+        return 0;
+      });
+    }
+    return [];
+  }, [contacts]);
 
   const renderItem = useCallback((props: {item: Contact}) => {
     return <ContactItemScreen {...props} />;
@@ -40,9 +57,9 @@ const ContactListScreen = () => {
   }
 
   return (
-    <View className="flex-1 bg-white">
+    <View className={`flex-1 bg-white pb-[${bottom}px]`}>
       <FlatList
-        data={contacts}
+        data={sortedData}
         className="p-4"
         contentContainerStyle={{paddingBottom: 120}}
         refreshControl={
@@ -52,7 +69,7 @@ const ContactListScreen = () => {
       />
       <TouchableOpacity
         onPress={() => navigate('ContactDetailScreen', {contactId: ''})}
-        className="absolute bottom-12 right-4">
+        className={'absolute bottom-12 right-4'}>
         <View className="bg-teal-700 p-4 rounded-full flex-row items-center">
           <PlusIcon />
           <Text className="text-white font-semibold">Add New Contact</Text>

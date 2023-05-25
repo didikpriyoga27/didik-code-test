@@ -45,7 +45,7 @@ function ContactItemScreen({item}: Props) {
             <Text className="font-bold text-black">
               {item.firstName} {item.lastName}
             </Text>
-            <Text>{item.age} Years</Text>
+            <Text className={'text-black'}>{item.age} Years</Text>
           </View>
           <View className="p-2 w-8 h-8 items-center justify-center">
             {deleteContactMutation.isLoading ? (

@@ -124,21 +124,21 @@ export default function ContactDetailScreen() {
         />
         <Text className="px-4 mt-4 text-black font-bold">First Name:</Text>
         <TextInput
-          className="border border-gray-300 px-4 mx-4 rounded-md"
+          className="border border-gray-300 px-4 mx-4 rounded-md text-black"
           value={firstName}
           onChangeText={setFirstName}
           placeholder="Enter First Name"
         />
         <Text className="px-4 mt-4 text-black font-bold">Last Name:</Text>
         <TextInput
-          className="border border-gray-300 px-4 mx-4 rounded-md"
+          className="border border-gray-300 px-4 mx-4 rounded-md text-black"
           value={lastName}
           onChangeText={setLastName}
           placeholder="Enter Last Name"
         />
         <Text className="px-4 mt-4 text-black font-bold">Age:</Text>
         <TextInput
-          className="border border-gray-300 px-4 mx-4 rounded-md"
+          className="border border-gray-300 px-4 mx-4 rounded-md text-black"
           value={age}
           onChangeText={setAge}
           keyboardType="numeric"
