@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {
   View,
   Text,
@@ -36,6 +36,13 @@ export default function ContactDetailScreen() {
   const [age, setAge] = useState('');
   const [photo, setPhoto] = useState('');
 
+  const defaultAvatar = useMemo(() => {
+    if (params.contactId) {
+      return null;
+    }
+    return `https://ui-avatars.com/api/?name=${firstName}+${lastName}&background=0f766e&color=fff`;
+  }, [firstName, lastName, params.contactId]);
+
   const {data: contact, isLoading} = useQuery(
     ['contact', params.contactId],
     () => {
@@ -49,7 +56,6 @@ export default function ContactDetailScreen() {
   );
 
   useEffect(() => {
-    console.log(contact);
     if (contact) {
       setFirstName(contact?.firstName);
       setLastName(contact?.lastName);
@@ -58,23 +64,43 @@ export default function ContactDetailScreen() {
     }
   }, [contact]);
 
-  const {mutateAsync, isLoading: isEditLoading} = useMutation(async () => {
-    if (params.contactId) {
-      const response = axios.put(`${baseUrl}/${params.contactId}`, {
+  const {mutateAsync: mutateSaveContact, isLoading: isSaveLoading} =
+    useMutation(async () => {
+      axios.post(`${baseUrl}`, {
         firstName,
         lastName,
         age: Number(age),
-        photo,
+        photo: defaultAvatar,
       });
-      return response;
-    }
-  });
+    });
+
+  const {mutateAsync: mutateEditContact, isLoading: isEditLoading} =
+    useMutation(async () => {
+      if (params.contactId) {
+        const response = axios.put(`${baseUrl}/${params.contactId}`, {
+          firstName,
+          lastName,
+          age: Number(age),
+          photo,
+        });
+        return response;
+      }
+    });
 
   const handleSave = async () => {
-    await mutateAsync().then(() => {
-      ToastAndroid.show('Contact edited successfully', ToastAndroid.SHORT);
+    if (params.contactId) {
+      return mutateEditContact().then(() => {
+        ToastAndroid.show('Contact edited successfully', ToastAndroid.SHORT);
+        queryClient.refetchQueries(['contacts']);
+        queryClient.refetchQueries(['contacts', params.contactId]);
+        setTimeout(() => {
+          goBack();
+        }, 500);
+      });
+    }
+    return mutateSaveContact().then(() => {
+      ToastAndroid.show('Contact saved successfully', ToastAndroid.SHORT);
       queryClient.refetchQueries(['contacts']);
-      queryClient.refetchQueries(['contacts', params.contactId]);
       setTimeout(() => {
         goBack();
       }, 500);
@@ -93,7 +119,7 @@ export default function ContactDetailScreen() {
     <View className="bg-white flex-1">
       <ScrollView keyboardShouldPersistTaps={'handled'} className="flex-1">
         <FastImage
-          source={{uri: photo}}
+          source={{uri: params.contactId ? photo : defaultAvatar ?? ''}}
           className="w-24 h-24 mr-4 rounded-full bg-gray-300 self-center mt-4"
         />
         <Text className="px-4 mt-4 text-black font-bold">First Name:</Text>
@@ -119,9 +145,12 @@ export default function ContactDetailScreen() {
           placeholder="Enter Age"
         />
       </ScrollView>
-      <TouchableOpacity onPress={handleSave}>
-        <View className="bg-teal-700 p-3 m-4 mb-12 rounded-md">
-          {isEditLoading ? (
+      <TouchableOpacity
+        className="bg-teal-700 m-4 mb-12 rounded-md h-12 justify-center"
+        disabled={!firstName || !lastName || !age}
+        onPress={handleSave}>
+        <View>
+          {isEditLoading || isSaveLoading ? (
             <ActivityIndicator color={'white'} size={'small'} />
           ) : (
             <Text className="text-white text-center font-bold text-lg">

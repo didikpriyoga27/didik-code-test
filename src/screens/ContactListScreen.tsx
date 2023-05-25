@@ -44,7 +44,7 @@ const ContactListScreen = () => {
       <FlatList
         data={contacts}
         className="p-4"
-        contentContainerStyle={{paddingBottom: 16}}
+        contentContainerStyle={{paddingBottom: 120}}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }

@@ -1,12 +1,12 @@
 import React, {memo, useState} from 'react';
 import {View, Text, ActivityIndicator, TouchableOpacity} from 'react-native';
-import {useMutation} from '@tanstack/react-query';
-import {useDispatch} from 'react-redux';
-import {Contact, deleteContact} from '../slices/contactSlice';
+import {useMutation, useQueryClient} from '@tanstack/react-query';
+import {Contact, baseUrl} from '../slices/contactSlice';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {StackParamList} from '../navigation/StackParamList';
 import DeleteIcon from '../shared/assets/svg/DeleteIcon';
 import FastImage from 'react-native-fast-image';
+import axios from 'axios';
 
 type Props = {
   item: Contact;
@@ -15,12 +15,15 @@ type Props = {
 function ContactItemScreen({item}: Props) {
   const {navigate} = useNavigation<NavigationProp<StackParamList>>();
   const [isDisableTouch, setIsDisableTouch] = useState(false);
-  const dispatch = useDispatch();
-  //@ts-ignore
+
+  const queryClient = useQueryClient();
+
   const deleteContactMutation = useMutation(() =>
-    //@ts-ignore
-    dispatch(deleteContact(item.id)),
+    axios.delete(`${baseUrl}/${item.id}`).then(() => {
+      queryClient.refetchQueries(['contacts']);
+    }),
   );
+
   const handleDeleteContact = async () => {
     setIsDisableTouch(true);
     await deleteContactMutation.mutateAsync();
